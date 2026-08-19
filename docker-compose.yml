@@ -39,6 +39,7 @@ services:
 
 
   config-server:
+    build: ./config-server
     image: config-server:latest
     container_name: config-server
     restart: unless-stopped
@@ -48,6 +49,7 @@ services:
 
 
   discovery-server:
+    build: ./discovery-server
     image: discovery-server:latest
     container_name: discovery-server
     restart: unless-stopped
@@ -60,6 +62,7 @@ services:
 
 
   user-service:
+    build: ./user-service-spring
     image: user-service:latest
     container_name: user-service
     restart: unless-stopped
@@ -75,6 +78,7 @@ services:
 
 
   notification-service:
+    build: ./notification-service
     image: notification-service:latest
     container_name: notification-service
     restart: unless-stopped
@@ -89,6 +93,7 @@ services:
 
 
   api-gateway:
+    build: ./api-gateway
     image: api-gateway:latest
     container_name: api-gateway
     restart: unless-stopped
