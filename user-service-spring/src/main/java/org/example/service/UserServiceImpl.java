@@ -1,7 +1,10 @@
 package org.example.service;
 
 import org.example.entity.User;
+import org.example.event.Operation;
+import org.example.event.UserEvent;
 import org.example.exception.UserNotFoundException;
+import org.example.producer.UserEventProducer;
 import org.example.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,9 +14,12 @@ import java.util.List;
 @Service
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
+    private final UserEventProducer userEventProducer;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository,
+                           UserEventProducer userEventProducer) {
         this.userRepository = userRepository;
+        this.userEventProducer = userEventProducer;
     }
 
     private void validateId(Long id) {
@@ -27,7 +33,6 @@ public class UserServiceImpl implements UserService {
                 new UserNotFoundException("Пользователь не найден"));
     }
 
-
     @Override
     @Transactional
     public User createUser(String name, String email, Integer age) {
@@ -36,8 +41,13 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Email уже существует");
         }
         User user = new User(name, email, age);
-        return userRepository.save(user);
-
+        User savedUser = userRepository.save(user);
+        UserEvent event = new UserEvent(
+                Operation.CREATE,
+                savedUser.getEmail()
+        );
+        userEventProducer.send(event);
+        return savedUser;
     }
 
     @Override
@@ -70,7 +80,12 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void deleteUser(Long id) {
         validateId(id);
-        getUserById(id);
+        User user = getUserById(id);
         userRepository.deleteById(id);
+        UserEvent event = new UserEvent(
+                Operation.DELETE,
+                user.getEmail()
+        );
+        userEventProducer.send(event);
     }
 }
